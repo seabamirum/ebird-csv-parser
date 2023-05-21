@@ -152,7 +152,7 @@ public abstract class EbirdCsvParser
 				// Read all lines and sort by date and time columns
 				List<CSVRecord> recordsList = csvParser.getRecords();	
 				recordsList.sort(Comparator.comparing(EbirdCsvParser::parseSubDate));
-				logger.debug("Read and sorted " + (recordsList.size()-1) + "eBird observations in " + stopwatch.getTime(TimeUnit.SECONDS) + " seconds");
+				logger.debug("Read and sorted " + (recordsList.size()-1) + " eBird observations in " + stopwatch.getTime(TimeUnit.SECONDS) + " seconds");
 				records = recordsList;
 			}
 			else
