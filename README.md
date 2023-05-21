@@ -10,17 +10,24 @@ The eBird CSV Parser is a convenient tool for parsing downloaded eBird CSV files
 
 ## Usage
 
-To use the eBird CSV Parser, you can call the `parseCsv` method with the appropriate parameters. Here are some example usages:
+To use the eBird CSV Parser, all you need to do is implement your own row processor method and call the `parseCsv` method with the appropriate parameters. Here are some example usages:
 
 ```java
-EbirdCsvParser.parseCsv(csvFile, RouteLoader::parseCsvLine, ParseMode.SINGLE_THREAD, PreSort.DATE);
+
+private void processCsvRow(EbirdCsvRow row) 
+{
+  String subId = row.getSubId();
+  //the rest of your implementation here
+}
+
+EbirdCsvParser.parseCsv(csvPath,this::processCsvRow,ParseMode.SINGLE_THREAD,PreSort.DATE);
 ```
 
 In this case, the CSV file is first sorted by date. This can be useful when you want to operate on a limited set of records and fetch checklists in order. Please note that sorting by date incurs a performance hit.
 
 
 ```java
-EbirdCsvParser.parseCsv(msc.getCsvFile(), this::parseCsvLine, ParseMode.MULTI_THREAD, PreSort.NONE);
+EbirdCsvParser.parseCsv(csvPath,this::processCsvRow,ParseMode.MULTI_THREAD,PreSort.NONE);
 ```
 
 When using the MULTI_THREAD mode, ensure that your RowProcessor implementation can handle multiple threads and that any data structures used are concurrently modifiable.
