@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>fun.seabird</groupId>
   <artifactId>ebird-csv-parser</artifactId>
-  <version>0.0.1</version>
+  <version>0.0.2</version>
   <name>ebird-csv-parser</name>
   
    <build>
@@ -48,7 +48,7 @@
 	<dependency>
 	    <groupId>org.apache.commons</groupId>
 	    <artifactId>commons-lang3</artifactId>
-	    <version>3.12.0</version>
+	    <version>3.13.0</version>
 	</dependency>
 
 	<!-- https://mvnrepository.com/artifact/org.slf4j/slf4j-api -->
@@ -62,7 +62,7 @@
 	<dependency>
 	    <groupId>io.projectreactor</groupId>
 	    <artifactId>reactor-core</artifactId>
-	    <version>3.5.6</version>
+	    <version>3.5.9</version>
 	</dependency>
 	
 	<dependency>
@@ -74,7 +74,7 @@
 	<dependency>
     <groupId>org.projectlombok</groupId>
     <artifactId>lombok</artifactId>
-    <version>1.18.26</version>
+    <version>1.18.28</version>
     <scope>provided</scope>
 </dependency>
 

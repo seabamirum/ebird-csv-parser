@@ -35,7 +35,7 @@ public class EbirdCsvRow
 	public LocalDateTime dateTime()
 	{
 		if (time == null)
-			return date.atTime(LocalTime.MIDNIGHT);
+			return date.atStartOfDay();
 		
 		return date.atTime(time);
 	}

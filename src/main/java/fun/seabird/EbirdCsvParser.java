@@ -19,16 +19,14 @@ import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.lang3.time.StopWatch;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Flux;
 import reactor.core.scheduler.Schedulers;
 
+@Slf4j
 public abstract class EbirdCsvParser 
 {
-	private static final Logger logger = LoggerFactory.getLogger(EbirdCsvParser.class);
-	
 	public enum ParseMode {SINGLE_THREAD,MULTI_THREAD}
 	
 	public enum PreSort {NONE,DATE}	
@@ -37,6 +35,8 @@ public abstract class EbirdCsvParser
 	
 	private static final AtomicInteger linesProcessed = new AtomicInteger(0);
 	
+	private static final int ROW_PREFETCH = 25000;
+	
 	/**
 	 * Parses the date and time fields from a CSV record and returns a LocalDateTime object representing the combined datetime value. 
 	 * If the time is not defined, assumes midnight.
@@ -44,7 +44,7 @@ public abstract class EbirdCsvParser
 	 * @param record The CSVRecord representing a single row of data in the CSV file.
 	 * @return A LocalDateTime object representing the combined date and time parsed from the CSV record.
 	 */
-	static final LocalDateTime parseSubDate(CSVRecord record)
+	private static LocalDateTime parseSubDate(CSVRecord record)
 	{
 		if (record.getRecordNumber() == 1l)
             return LocalDateTime.MIN; 
@@ -64,7 +64,7 @@ public abstract class EbirdCsvParser
 	 * @param record The CSVRecord representing a single row of data in the CSV file.
 	 * @return An EbirdCsvRow object constructed from the CSV record.
 	 */
-	private static final EbirdCsvRow parseCsvLine(CSVRecord record) 
+	private static EbirdCsvRow parseCsvLine(CSVRecord record) 
 	{
 	    if (record.getRecordNumber() == 1l)
 	        return null; // skip the header
@@ -136,7 +136,7 @@ public abstract class EbirdCsvParser
 	 */
 	public static final void parseCsv(Path csvFile,Consumer<EbirdCsvRow> rowProcessor,ParseMode mode,PreSort preSort) throws IOException
 	{
-		logger.info("Parsing " + csvFile + "...");
+		log.info("Parsing {} ...", csvFile);
 		
 		linesProcessed.set(0);
 		
@@ -146,19 +146,19 @@ public abstract class EbirdCsvParser
 
 			StopWatch stopwatch = StopWatch.createStarted();
 			
-			Iterable<CSVRecord> records;
+			Flux<CSVRecord> recordsFlux;
 			if (PreSort.DATE == preSort)
 			{
 				// Read all lines and sort by date and time columns
 				List<CSVRecord> recordsList = csvParser.getRecords();	
 				recordsList.sort(Comparator.comparing(EbirdCsvParser::parseSubDate));
-				logger.debug("Read and sorted " + (recordsList.size()-1) + " eBird observations in " + stopwatch.getTime(TimeUnit.SECONDS) + " seconds");
-				records = recordsList;
+				log.debug("Read and sorted {} eBird observations in {} seconds",recordsList.size()-1,stopwatch.getTime(TimeUnit.SECONDS));
+				recordsFlux = Flux.fromIterable(recordsList);
 			}
 			else
-				records = csvParser;
+				recordsFlux = Flux.fromIterable(csvParser);
 			
-			Consumer<CSVRecord> csvRecordConsumer = new Consumer<CSVRecord>() {
+			final Consumer<CSVRecord> csvRecordConsumer = new Consumer<CSVRecord>() {
 			    @Override
 			    public void accept(CSVRecord record) 
 			    {
@@ -174,15 +174,16 @@ public abstract class EbirdCsvParser
 			switch (mode)
 			{
 				case MULTI_THREAD:
-					Flux.fromIterable(records).parallel().runOn(Schedulers.parallel()).sequential(25000).doOnNext(csvRecordConsumer).then().block();
+					recordsFlux.parallel().runOn(Schedulers.parallel()).sequential(ROW_PREFETCH).doOnNext(csvRecordConsumer).then().block();
 					break;
 				case SINGLE_THREAD:
-					Flux.fromIterable(records).doOnNext(csvRecordConsumer).then().block();
+					recordsFlux.doOnNext(csvRecordConsumer).then().block();
 					break;
 			}
 
 			stopwatch.stop();
-			logger.info("Processed " + linesProcessed.get() + " eBird observations in " + stopwatch.getTime(TimeUnit.SECONDS) + " seconds");
+			
+			log.info("Processed {} eBird observations in {} seconds",linesProcessed.get(),stopwatch.getTime(TimeUnit.SECONDS));
 		}
 	}
 	
