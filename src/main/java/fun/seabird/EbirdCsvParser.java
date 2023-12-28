@@ -136,7 +136,7 @@ public abstract class EbirdCsvParser
 	 */
 	public static final void parseCsv(Path csvFile,Consumer<EbirdCsvRow> rowProcessor,ParseMode mode,PreSort preSort) throws IOException
 	{
-		log.info("Parsing {} ...", csvFile);
+		log.info("Parsing " + csvFile + " ...");
 		
 		linesProcessed.set(0);
 		
