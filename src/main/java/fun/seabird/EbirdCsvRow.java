@@ -6,19 +6,28 @@ import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.EqualsAndHashCode.Include;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
-@Data
+@Getter
+@Setter
+@NoArgsConstructor
+@EqualsAndHashCode(onlyExplicitlyIncluded=true)
+@ToString
 public class EbirdCsvRow 
 {
 	private String subId;
 	private String commonName;
-	private String sciName;
+	@Include private String sciName;
 	private Double taxonOrder;
 	private String count;
 	private String subnat1Code;
 	private String subnat2Name;
-	private String locId;
+	@Include private String locId;
 	private String locName;
 	private Double lat;
 	private Double lng;
@@ -32,6 +41,10 @@ public class EbirdCsvRow
 	private Integer partySize;
 	private String breedingCode;
 	
+	//space-separated String in the CSV
+	private List<Long> assetIds = new ArrayList<>();
+	
+	@Include
 	public LocalDateTime dateTime()
 	{
 		if (time == null)
@@ -40,6 +53,4 @@ public class EbirdCsvRow
 		return date.atTime(time);
 	}
 	
-	//space-separated String in the CSV
-	private List<Long> assetIds = new ArrayList<>();
 }

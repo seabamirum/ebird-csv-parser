@@ -123,15 +123,18 @@ public abstract class EbirdCsvParser
 	}	
 	
 	/**
-	 * Parses a CSV file and applies the given row processor to each CSV record.
-	 * The parsing can be performed in single-threaded or multi-threaded mode,
-	 * based on the provided ParseMode. Optionally, the CSV records can be pre-sorted
-	 * based on the specified PreSort before processing.
+	 * Parses a CSV file containing eBird observation data and processes each row according to the specified {@code rowProcessor}.
+	 * The method allows for pre-sorting of data based on the observation date and supports processing in either single-threaded
+	 * or multi-threaded mode as specified by the {@code mode} parameter.
 	 *
-	 * @param csvFile The path to the CSV file to be parsed.
-	 * @param rowProcessor The consumer function to be applied to each parsed CSV row.
-	 * @param mode The parsing mode: SINGLE_THREAD or MULTI_THREAD.
-	 * @param preSort The pre-sorting option for the CSV records: null, PreSort.DATE, or PreSort.DEFAULT_SORT.
+	 * @param csvFile The path to the CSV file to be parsed. Must not be {@code null}.
+	 * @param rowProcessor A {@link Consumer} that processes each parsed row of the CSV file. The consumer receives an instance
+	 *                     of {@link EbirdCsvRow}, which represents the parsed data of each row. Must not be {@code null}.
+	 * @param mode The {@link ParseMode} specifying how the CSV file should be processed. {@link ParseMode#MULTI_THREAD} enables
+	 *             multi-threaded processing, while {@link ParseMode#SINGLE_THREAD} uses a single thread for processing.
+	 * @param preSort Specifies the pre-sorting method to be applied to the CSV data before processing. If set to
+	 *                {@link PreSort#DATE}, the data will be sorted by observation date prior to processing; otherwise, the
+	 *                data is processed in the order it appears in the file.
 	 * @throws IOException If an I/O error occurs while reading the CSV file.
 	 */
 	public static final void parseCsv(Path csvFile,Consumer<EbirdCsvRow> rowProcessor,ParseMode mode,PreSort preSort) throws IOException
