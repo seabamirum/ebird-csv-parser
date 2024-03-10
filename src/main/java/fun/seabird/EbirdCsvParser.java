@@ -1,8 +1,6 @@
 package fun.seabird;
 
 import java.io.IOException;
-import java.io.Reader;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -14,15 +12,13 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
-import org.apache.commons.csv.CSVFormat;
-import org.apache.commons.csv.CSVParser;
-import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.lang3.time.StopWatch;
 
+import de.siegmar.fastcsv.reader.CsvReader;
+import de.siegmar.fastcsv.reader.CsvRecord;
 import lombok.extern.slf4j.Slf4j;
-import reactor.core.publisher.Flux;
-import reactor.core.scheduler.Schedulers;
 
 @Slf4j
 public abstract class EbirdCsvParser 
@@ -33,88 +29,87 @@ public abstract class EbirdCsvParser
 	
 	private static final DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("hh:mm a");
 	
-	private static final AtomicInteger linesProcessed = new AtomicInteger(0);
-	
-	private static final int ROW_PREFETCH = 25000;
+	private static final AtomicInteger linesProcessed = new AtomicInteger(0);	
 	
 	/**
 	 * Parses the date and time fields from a CSV record and returns a LocalDateTime object representing the combined datetime value. 
 	 * If the time is not defined, assumes midnight.
 	 *
-	 * @param record The CSVRecord representing a single row of data in the CSV file.
+	 * @param record The CsvRecord representing a single row of data in the CSV file.
 	 * @return A LocalDateTime object representing the combined date and time parsed from the CSV record.
 	 */
-	private static LocalDateTime parseSubDate(CSVRecord record)
+	private static LocalDateTime parseSubDate(CsvRecord record)
 	{
-		if (record.getRecordNumber() == 1l)
+		if (record.getStartingLineNumber()== 1l)
             return LocalDateTime.MIN; 
 		
 		LocalTime obsTime;
-		if (record.get(12).isBlank())
+		if (record.getField(12).isBlank())
 			obsTime = LocalTime.MIDNIGHT;
 		else
-			obsTime = LocalTime.parse(record.get(12),timeFormatter);
+			obsTime = LocalTime.parse(record.getField(12),timeFormatter);
 		
-		return LocalDate.parse(record.get(11)).atTime(obsTime);
+		return LocalDate.parse(record.getField(11)).atTime(obsTime);
 	}
 	
 	/**
 	 * Parses a single CSV record and constructs an EbirdCsvRow object from the record's fields.
 	 *
-	 * @param record The CSVRecord representing a single row of data in the CSV file.
+	 * @param record The CsvRecord representing a single row of data in the CSV file.
 	 * @return An EbirdCsvRow object constructed from the CSV record.
 	 */
-	private static EbirdCsvRow parseCsvLine(CSVRecord record) 
+	private static EbirdCsvRow parseCsvLine(CsvRecord record) 
 	{
-	    if (record.getRecordNumber() == 1l)
+	    if (record.getStartingLineNumber() == 1l)
 	        return null; // skip the header
 
 	    EbirdCsvRow row = new EbirdCsvRow();
 
-	    row.setSubId(record.get(0));
-	    row.setCommonName(record.get(1));
-	    row.setSciName(record.get(2));
-	    row.setTaxonOrder(Double.parseDouble(record.get(3)));
-	    row.setCount(record.get(4));
-	    row.setSubnat1Code(record.get(5));
-	    row.setSubnat2Name(record.get(6));
-	    row.setLocId(record.get(7));
-	    row.setLocName(record.get(8));
-	    row.setLat(Double.parseDouble(record.get(9)));
-	    row.setLng(Double.parseDouble(record.get(10)));
-	    row.setDate(LocalDate.parse(record.get(11))); // Date format is ISO-8601 (yyyy-MM-dd)
+	    row.setSubId(record.getField(0));
+	    row.setCommonName(record.getField(1));
+	    row.setSciName(record.getField(2));
+	    row.setTaxonOrder(Double.valueOf(record.getField(3)));
+	    row.setCount(record.getField(4));
+	    row.setSubnat1Code(record.getField(5));
+	    row.setSubnat2Name(record.getField(6));
+	    row.setLocId(record.getField(7));
+	    row.setLocName(record.getField(8));
+	    row.setLat(Double.valueOf(record.getField(9)));
+	    row.setLng(Double.valueOf(record.getField(10)));
+	    row.setDate(LocalDate.parse(record.getField(11))); // Date format is ISO-8601 (yyyy-MM-dd)
 	    
-	    if (!record.get(12).isBlank())
-	    	row.setTime(LocalTime.parse(record.get(12),timeFormatter));
+	    if (!record.getField(12).isBlank())
+	    	row.setTime(LocalTime.parse(record.getField(12),timeFormatter));
 	    
-	    row.setProtocol(record.get(13));
+	    row.setProtocol(record.getField(13));
 	    
-		if (!record.get(14).isBlank())
-			row.setDuration(Integer.parseInt(record.get(14)));
+		if (!record.getField(14).isBlank())
+			row.setDuration(Integer.valueOf(record.getField(14)));
 		else
 			row.setDuration(0);
 	    
-		row.setCompleteChecklist(record.get(15).equals("1"));
+		row.setCompleteChecklist(record.getField(15).equals("1"));
 
-	    if (record.size() > 16 && !record.get(16).isBlank()) {
-	        row.setDistanceKm(Double.parseDouble(record.get(16)));
+		int fieldCount = record.getFieldCount();
+	    if (fieldCount > 16 && !record.getField(16).isBlank()) {
+	        row.setDistanceKm(Double.valueOf(record.getField(16)));
 	    }
 
-	    if (record.size() > 17 && !record.get(17).isBlank()) {
-	        row.setAreaHa(Double.parseDouble(record.get(17)));
+	    if (fieldCount > 17 && !record.getField(17).isBlank()) {
+	        row.setAreaHa(Double.valueOf(record.getField(17)));
 	    }
 
-	    if (record.size() > 18 && !record.get(18).isBlank())
-	    	row.setPartySize(Integer.parseInt(record.get(18)));
+	    if (fieldCount > 18 && !record.getField(18).isBlank())
+	    	row.setPartySize(Integer.valueOf(record.getField(18)));
 	    
-	    if (record.size() > 19)
-	    	row.setBreedingCode(record.get(19));
+	    if (fieldCount > 19)
+	    	row.setBreedingCode(record.getField(19));
 
 	    // Parsing the space-separated String into a List of Long values
-	    if (record.size() > 22) {
-	        String assetIdsString = record.get(22);
+	    if (fieldCount > 22) {
+	        String assetIdsString = record.getField(22);
 	        List<Long> assetIds = Arrays.stream(assetIdsString.split(" "))
-	                .map(Long::parseLong)
+	                .map(Long::valueOf)
 	                .toList();
 	        row.setAssetIds(assetIds);
 	    }
@@ -143,27 +138,21 @@ public abstract class EbirdCsvParser
 		
 		linesProcessed.set(0);
 		
-		try (Reader fileReader = Files.newBufferedReader(csvFile);
-				CSVParser csvParser = new CSVParser(fileReader,
-						CSVFormat.DEFAULT.builder().setSkipHeaderRecord(true).build())) {
-
+		try (CsvReader<CsvRecord> csvParser = CsvReader.builder().ofCsvRecord(csvFile)) 
+		{
 			StopWatch stopwatch = StopWatch.createStarted();
 			
-			Flux<CSVRecord> recordsFlux;
 			if (PreSort.DATE == preSort)
 			{
 				// Read all lines and sort by date and time columns
-				List<CSVRecord> recordsList = csvParser.getRecords();	
+				List<CsvRecord> recordsList = csvParser.stream().collect(Collectors.toList());
 				recordsList.sort(Comparator.comparing(EbirdCsvParser::parseSubDate));
-				log.debug("Read and sorted {} eBird observations in {} seconds",recordsList.size()-1,stopwatch.getTime(TimeUnit.SECONDS));
-				recordsFlux = Flux.fromIterable(recordsList);
+				log.debug("Read and sorted " + (recordsList.size()-1) + " eBird observations in " + stopwatch.getTime(TimeUnit.SECONDS) + " seconds");
 			}
-			else
-				recordsFlux = Flux.fromIterable(csvParser);
 			
-			final Consumer<CSVRecord> csvRecordConsumer = new Consumer<CSVRecord>() {
+			final Consumer<CsvRecord> CsvRecordConsumer = new Consumer<CsvRecord>() {
 			    @Override
-			    public void accept(CSVRecord record) 
+			    public void accept(CsvRecord record) 
 			    {
 			    	EbirdCsvRow row = parseCsvLine(record);
 			    	if (row == null) //header row
@@ -174,19 +163,11 @@ public abstract class EbirdCsvParser
 			    }
 			};	
 			
-			switch (mode)
-			{
-				case MULTI_THREAD:
-					recordsFlux.parallel().runOn(Schedulers.parallel()).sequential(ROW_PREFETCH).doOnNext(csvRecordConsumer).then().block();
-					break;
-				case SINGLE_THREAD:
-					recordsFlux.doOnNext(csvRecordConsumer).then().block();
-					break;
-			}
+			csvParser.forEach(CsvRecordConsumer);
 
 			stopwatch.stop();
 			
-			log.info("Processed {} eBird observations in {} seconds",linesProcessed.get(),stopwatch.getTime(TimeUnit.SECONDS));
+			log.info("Processed " + linesProcessed.get() + " eBird observations in " + stopwatch.getTime(TimeUnit.SECONDS) + " seconds");
 		}
 	}
 	

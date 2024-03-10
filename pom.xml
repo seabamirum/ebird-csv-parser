@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>fun.seabird</groupId>
   <artifactId>ebird-csv-parser</artifactId>
-  <version>0.0.3</version>
+  <version>0.0.4</version>
   <name>ebird-csv-parser</name>
   
    <build>
@@ -57,18 +57,11 @@
 	    <artifactId>slf4j-api</artifactId>
 	    <version>2.0.11</version>
 	</dependency>
-
-	<!-- https://mvnrepository.com/artifact/io.projectreactor/reactor-core -->
-	<dependency>
-	    <groupId>io.projectreactor</groupId>
-	    <artifactId>reactor-core</artifactId>
-	    <version>3.6.2</version>
-	</dependency>
 	
 	<dependency>
-	    <groupId>org.apache.commons</groupId>
-	    <artifactId>commons-csv</artifactId>
-	    <version>1.10.0</version>
+	    <groupId>de.siegmar</groupId>
+	    <artifactId>fastcsv</artifactId>
+	    <version>3.1.0</version>
 	</dependency>
 	
 	<dependency>
