@@ -22,9 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public abstract class EbirdCsvParser 
-{
-	public enum ParseMode {SINGLE_THREAD,MULTI_THREAD}
-	
+{	
 	public enum PreSort {NONE,DATE}	
 	
 	private static final DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("hh:mm a");
@@ -124,15 +122,13 @@ public abstract class EbirdCsvParser
 	 *
 	 * @param csvFile The path to the CSV file to be parsed. Must not be {@code null}.
 	 * @param rowProcessor A {@link Consumer} that processes each parsed row of the CSV file. The consumer receives an instance
-	 *                     of {@link EbirdCsvRow}, which represents the parsed data of each row. Must not be {@code null}.
-	 * @param mode The {@link ParseMode} specifying how the CSV file should be processed. {@link ParseMode#MULTI_THREAD} enables
-	 *             multi-threaded processing, while {@link ParseMode#SINGLE_THREAD} uses a single thread for processing.
+	 *                     of {@link EbirdCsvRow}, which represents the parsed data of each row. Must not be {@code null}.	 
 	 * @param preSort Specifies the pre-sorting method to be applied to the CSV data before processing. If set to
 	 *                {@link PreSort#DATE}, the data will be sorted by observation date prior to processing; otherwise, the
 	 *                data is processed in the order it appears in the file.
 	 * @throws IOException If an I/O error occurs while reading the CSV file.
 	 */
-	public static final void parseCsv(Path csvFile,Consumer<EbirdCsvRow> rowProcessor,ParseMode mode,PreSort preSort) throws IOException
+	public static void parseCsv(Path csvFile,Consumer<EbirdCsvRow> rowProcessor,PreSort preSort) throws IOException
 	{
 		log.info("Parsing " + csvFile + " ...");
 		
@@ -178,9 +174,9 @@ public abstract class EbirdCsvParser
 	 * @param rowProcessor The consumer function to be applied to each parsed CSV row.
 	 * @throws IOException If an I/O error occurs while reading the CSV file.
 	 */
-	public static final void parseCsv(Path csvFile,Consumer<EbirdCsvRow> rowProcessor) throws IOException
+	public static void parseCsv(Path csvFile,Consumer<EbirdCsvRow> rowProcessor) throws IOException
 	{
-		parseCsv(csvFile,rowProcessor,ParseMode.SINGLE_THREAD,PreSort.NONE);		
+		parseCsv(csvFile,rowProcessor,PreSort.NONE);		
 	}
 	
 }
