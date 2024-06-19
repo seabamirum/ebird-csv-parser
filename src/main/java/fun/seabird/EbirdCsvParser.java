@@ -138,13 +138,17 @@ public abstract class EbirdCsvParser
 		{
 			StopWatch stopwatch = StopWatch.createStarted();
 			
+			@SuppressWarnings("resource")
+			Iterable<CsvRecord> recordsIterable = csvParser;
 			if (PreSort.DATE == preSort)
 			{
 				// Read all lines and sort by date and time columns
 				List<CsvRecord> recordsList = csvParser.stream().collect(Collectors.toList());
 				recordsList.sort(Comparator.comparing(EbirdCsvParser::parseSubDate));
 				log.debug("Read and sorted " + (recordsList.size()-1) + " eBird observations in " + stopwatch.getTime(TimeUnit.SECONDS) + " seconds");
+				recordsIterable = recordsList;
 			}
+				
 			
 			final Consumer<CsvRecord> CsvRecordConsumer = new Consumer<CsvRecord>() {
 			    @Override
@@ -159,7 +163,7 @@ public abstract class EbirdCsvParser
 			    }
 			};	
 			
-			csvParser.forEach(CsvRecordConsumer);
+			recordsIterable.forEach(CsvRecordConsumer);
 
 			stopwatch.stop();
 			
