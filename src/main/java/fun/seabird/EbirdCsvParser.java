@@ -21,8 +21,10 @@ import de.siegmar.fastcsv.reader.CsvRecord;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public abstract class EbirdCsvParser 
+public final class EbirdCsvParser 
 {	
+	private EbirdCsvParser () {}
+	
 	public enum PreSort {NONE,DATE}	
 	
 	private static final DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("hh:mm a");
@@ -147,8 +149,7 @@ public abstract class EbirdCsvParser
 				recordsList.sort(Comparator.comparing(EbirdCsvParser::parseSubDate));
 				log.debug("Read and sorted " + (recordsList.size()-1) + " eBird observations in " + stopwatch.getTime(TimeUnit.SECONDS) + " seconds");
 				recordsIterable = recordsList;
-			}
-				
+			}				
 			
 			final Consumer<CsvRecord> CsvRecordConsumer = new Consumer<CsvRecord>() {
 			    @Override
@@ -172,7 +173,7 @@ public abstract class EbirdCsvParser
 	}
 	
 	/**
-	 * Parses a CSV file using single-threaded mode and no pre-sorting, and applies the given row processor to each CSV record.
+	 * Parses a CSV file with no pre-sorting, and applies the given row processor to each CSV record.
 	 *
 	 * @param csvFile The path to the CSV file to be parsed.
 	 * @param rowProcessor The consumer function to be applied to each parsed CSV row.
