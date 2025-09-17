@@ -136,7 +136,7 @@ public final class EbirdCsvParser
 		
 		linesProcessed.set(0);
 		
-		try (CsvReader<CsvRecord> csvParser = CsvReader.builder().ofCsvRecord(csvFile)) 
+		try (CsvReader<CsvRecord> csvParser = CsvReader.builder().allowMissingFields(true).ofCsvRecord(csvFile)) 
 		{
 			StopWatch stopwatch = StopWatch.createStarted();
 			
